@@ -9,7 +9,7 @@ variable "lambda_name" {
 
 variable "upload_file" {
     type = "string"
-    default = "upload_file.zip"
+    default = "../package.zip"
 }
 
 data "aws_caller_identity" "current" {
@@ -48,7 +48,6 @@ CONFIG
     cluster_config {
         instance_type = "t2.micro.elasticsearch"
         instance_count = 1
-
     }
 }
 
@@ -99,10 +98,10 @@ resource aws_iam_role_policy "lambda_es_role_policy" {
 }
 
 resource aws_lambda_function "fetch_nest_data" {
-    name = "${var.lambda_name}"
     function_name = "${var.lambda_name}"
     role = "${aws_iam_role.lambda_es_role.arn}"
     runtime = "nodejs4.3"
     handler = "index.handler"
     filename = "${var.upload_file}"
+    source_code_hash = "${base64sha256(file(var.upload_file))}"
 }
