@@ -12,6 +12,10 @@ variable "upload_file" {
     default = "../package.zip"
 }
 
+variable "source_ip" {
+    type = "string"
+}
+
 data "aws_caller_identity" "current" {
 
 }
@@ -22,21 +26,24 @@ resource "aws_elasticsearch_domain" "nestory" {
 
     access_policies = <<CONFIG
 {
-    "Version": "2012-10-17",
     "Statement": [
         {
             "Action": "es:*",
-            "Principal": "*",
-            "Effect": "Allow",
             "Condition": {
-                "IpAddress": {"aws:SourceIp": ["2.25.112.233"]}
-            }
+                "IpAddress": {
+                    "aws:SourceIp": "2.25.112.233"
+                }
+            },
+            "Effect": "Allow",
+            "Principal": "*",
+            "Resource": "arn:aws:es:us-east-1:${data.aws_caller_identity.current.account_id}:domain/nestory/*"
         }
-    ]
+    ],
+    "Version":"2012-10-17"
 }
 CONFIG
     snapshot_options {
-        automated_snapshot_start_hour = 20
+        automated_snapshot_start_hour = 10
     }
 
     ebs_options {
@@ -52,12 +59,6 @@ CONFIG
 }
 
 data "aws_iam_policy_document" "lambda_es_policy" {
-    statement {
-        actions = [
-            "es:ESHttpPost"
-        ]
-        resources = ["${aws_elasticsearch_domain.nestory.arn}/*"]
-    }
     statement {
         actions = [
             "logs:CreateLogGroup"
@@ -104,4 +105,18 @@ resource aws_lambda_function "fetch_nest_data" {
     handler = "index.handler"
     filename = "${var.upload_file}"
     source_code_hash = "${base64sha256(file(var.upload_file))}"
+}
+
+resource aws_cloudwatch_event_rule "trigger_nest_fetch" {
+    name = "trigger_nest_fetch"
+    schedule_expression = "rate(5 minutes)"
+    is_enabled = true
+}
+
+resource aws_lambda_permission "event_trigger_nest_fetch" {
+    action = "lambda:InvokeFunction"
+    function_name = "${aws_lambda_function.fetch_nest_data.function_name}"
+    principal = "events.amazonaws.com"
+    statement_id = "InvokeNestFetchOnSchedule"
+    source_arn = "${aws_cloudwatch_event_rule.trigger_nest_fetch.arn}"
 }

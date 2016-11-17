@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "clean": "rm -rf install/ package.zip",
+    "build": "mkdir -p install; cp package.json index.js .env install/; npm install --production --prefix install/; cd install; zip -r ../package.zip .env *",
+    "terraform": "cd terraform; terraform apply"
   },
   "author": "",
   "license": "ISC",
