@@ -78,7 +78,7 @@ resource aws_lambda_function "fetch_nest_data" {
 resource aws_cloudwatch_event_rule "trigger_nest_fetch" {
     name = "trigger_nest_fetch"
     schedule_expression = "rate(5 minutes)"
-    is_enabled = false
+    is_enabled = true
 }
 
 resource aws_cloudwatch_event_target "trigger_nest_fetch_target" {
