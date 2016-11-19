@@ -20,45 +20,7 @@ data "aws_caller_identity" "current" {
 
 }
 
-# resource "aws_elasticsearch_domain" "nestory" {
-#     domain_name = "nestory"
-#     elasticsearch_version = "2.3"
-
-#     access_policies = <<CONFIG
-# {
-#     "Statement": [
-#         {
-#             "Action": "es:*",
-#             "Condition": {
-#                 "IpAddress": {
-#                     "aws:SourceIp": "2.25.112.233"
-#                 }
-#             },
-#             "Effect": "Allow",
-#             "Principal": "*",
-#             "Resource": "arn:aws:es:us-east-1:${data.aws_caller_identity.current.account_id}:domain/nestory/*"
-#         }
-#     ],
-#     "Version":"2012-10-17"
-# }
-# CONFIG
-#     snapshot_options {
-#         automated_snapshot_start_hour = 10
-#     }
-
-#     ebs_options {
-#         ebs_enabled = true
-#         volume_type = "standard"
-#         volume_size = 10
-#     }
-
-#     cluster_config {
-#         instance_type = "t2.micro.elasticsearch"
-#         instance_count = 1
-#     }
-# }
-
-data "aws_iam_policy_document" "lambda_es_policy" {
+data "aws_iam_policy_document" "lambda_db_policy" {
     statement {
         actions = [
             "logs:CreateLogGroup"
@@ -72,9 +34,15 @@ data "aws_iam_policy_document" "lambda_es_policy" {
         ],
         resources = ["arn:aws:logs:us-east-1:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${var.lambda_name}:*"]
     }
+    statement {
+        actions = [
+            "dynamodb:PutItem"
+        ]
+        resources = ["${aws_dynamodb_table.nest_reading_history.arn}"]
+    }
 }
 
-resource aws_iam_role "lambda_es_role" {
+resource aws_iam_role "lambda_db_role" {
     name = "lambda_role"
     assume_role_policy = <<CONFIG
 {
@@ -92,15 +60,15 @@ resource aws_iam_role "lambda_es_role" {
 CONFIG
 }
 
-resource aws_iam_role_policy "lambda_es_role_policy" {
-    name = "lambda_es_role_policy"
-    role = "${aws_iam_role.lambda_es_role.id}"
-    policy = "${data.aws_iam_policy_document.lambda_es_policy.json}"
+resource aws_iam_role_policy "lambda_db_role_policy" {
+    name = "lambda_db_role_policy"
+    role = "${aws_iam_role.lambda_db_role.id}"
+    policy = "${data.aws_iam_policy_document.lambda_db_policy.json}"
 }
 
 resource aws_lambda_function "fetch_nest_data" {
     function_name = "${var.lambda_name}"
-    role = "${aws_iam_role.lambda_es_role.arn}"
+    role = "${aws_iam_role.lambda_db_role.arn}"
     runtime = "nodejs4.3"
     handler = "index.handler"
     filename = "${var.upload_file}"
@@ -123,7 +91,7 @@ resource aws_dynamodb_table "nest_reading_history" {
     hash_key = "timestamp"
     attribute {
         name = "timestamp"
-        type = "S"
+        type = "N"
     }
     write_capacity = 1
     read_capacity = 1

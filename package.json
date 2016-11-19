@@ -19,6 +19,7 @@
     "request": "^2.78.0"
   },
   "devDependencies": {
+    "aws-sdk": "^2.7.5",
     "chai": "^3.5.0",
     "eslint": "^3.10.0",
     "eslint-config-airbnb-base": "^10.0.1",
