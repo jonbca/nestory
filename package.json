@@ -6,20 +6,24 @@
   "scripts": {
     "test": "mocha",
     "clean": "rm -rf install/ package.zip",
-    "build": "mkdir -p install; cp package.json index.js .env install/; npm install --production --prefix install/; cd install; zip -r ../package.zip .env *",
+    "build": "mkdir -p install; cp package.json *.js .env install/; npm install --production --prefix install/; cd install; zip -r ../package.zip .env *",
     "terraform": "cd terraform; terraform apply"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "dotenv": "^2.0.0",
-    "requests": "^0.1.7"
+    "lodash.get": "^4.4.2",
+    "lodash.keys": "^4.2.0",
+    "lodash.mapvalues": "^4.6.0",
+    "request": "^2.78.0"
   },
   "devDependencies": {
     "chai": "^3.5.0",
     "eslint": "^3.10.0",
     "eslint-config-airbnb-base": "^10.0.1",
     "eslint-plugin-import": "^2.2.0",
+    "eslint-plugin-lodash": "^2.2.0",
     "mocha": "^3.1.2"
   },
   "engines": {

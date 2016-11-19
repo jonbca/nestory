@@ -20,43 +20,43 @@ data "aws_caller_identity" "current" {
 
 }
 
-resource "aws_elasticsearch_domain" "nestory" {
-    domain_name = "nestory"
-    elasticsearch_version = "2.3"
+# resource "aws_elasticsearch_domain" "nestory" {
+#     domain_name = "nestory"
+#     elasticsearch_version = "2.3"
 
-    access_policies = <<CONFIG
-{
-    "Statement": [
-        {
-            "Action": "es:*",
-            "Condition": {
-                "IpAddress": {
-                    "aws:SourceIp": "2.25.112.233"
-                }
-            },
-            "Effect": "Allow",
-            "Principal": "*",
-            "Resource": "arn:aws:es:us-east-1:${data.aws_caller_identity.current.account_id}:domain/nestory/*"
-        }
-    ],
-    "Version":"2012-10-17"
-}
-CONFIG
-    snapshot_options {
-        automated_snapshot_start_hour = 10
-    }
+#     access_policies = <<CONFIG
+# {
+#     "Statement": [
+#         {
+#             "Action": "es:*",
+#             "Condition": {
+#                 "IpAddress": {
+#                     "aws:SourceIp": "2.25.112.233"
+#                 }
+#             },
+#             "Effect": "Allow",
+#             "Principal": "*",
+#             "Resource": "arn:aws:es:us-east-1:${data.aws_caller_identity.current.account_id}:domain/nestory/*"
+#         }
+#     ],
+#     "Version":"2012-10-17"
+# }
+# CONFIG
+#     snapshot_options {
+#         automated_snapshot_start_hour = 10
+#     }
 
-    ebs_options {
-        ebs_enabled = true
-        volume_type = "standard"
-        volume_size = 10
-    }
+#     ebs_options {
+#         ebs_enabled = true
+#         volume_type = "standard"
+#         volume_size = 10
+#     }
 
-    cluster_config {
-        instance_type = "t2.micro.elasticsearch"
-        instance_count = 1
-    }
-}
+#     cluster_config {
+#         instance_type = "t2.micro.elasticsearch"
+#         instance_count = 1
+#     }
+# }
 
 data "aws_iam_policy_document" "lambda_es_policy" {
     statement {
@@ -110,7 +110,25 @@ resource aws_lambda_function "fetch_nest_data" {
 resource aws_cloudwatch_event_rule "trigger_nest_fetch" {
     name = "trigger_nest_fetch"
     schedule_expression = "rate(5 minutes)"
-    is_enabled = true
+    is_enabled = false
+}
+
+resource aws_cloudwatch_event_target "trigger_nest_fetch_target" {
+    rule = "${aws_cloudwatch_event_rule.trigger_nest_fetch.name}"
+    arn = "${aws_lambda_function.fetch_nest_data.arn}"
+}
+
+resource aws_dynamodb_table "nest_reading_history" {
+    name = "NestoryReadings"
+    hash_key = "timestamp"
+    attribute {
+        name = "timestamp"
+        type = "S"
+    }
+    write_capacity = 1
+    read_capacity = 1
+    stream_enabled = true
+    stream_view_type = "NEW_IMAGE"
 }
 
 resource aws_lambda_permission "event_trigger_nest_fetch" {
