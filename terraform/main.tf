@@ -106,3 +106,35 @@ resource aws_lambda_permission "event_trigger_nest_fetch" {
     statement_id = "InvokeNestFetchOnSchedule"
     source_arn = "${aws_cloudwatch_event_rule.trigger_nest_fetch.arn}"
 }
+
+resource aws_elasticsearch_domain "nestory_es_domain" {
+    domain_name = "nestory"
+    elasticsearch_version = "2.3"
+    access_policies = <<CONFIG
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": "es:*",
+            "Principal": "*",
+            "Effect": "Allow",
+            "Condition": {
+                "IpAddress": {"aws:SourceIp": ["2.25.112.233/32"]}
+            }
+        }
+    ]
+}
+CONFIG
+    snapshot_options {
+        automated_snapshot_start_hour = 23
+    }
+    ebs_options {
+        ebs_enabled = true
+        volume_type = 'standard'
+        volume_size = 10
+    }
+    cluster_config {
+        instance_type = 't2.micro.elasticsearch'
+        instance_count = 1
+    }
+}
