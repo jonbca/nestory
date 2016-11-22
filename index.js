@@ -49,11 +49,11 @@ function saveNestData(body) {
   };
 
   return new Promise((resolve, reject) => {
-    docClient.put(params, (err, data) => {
+    docClient.put(params, (err) => {
       if (err) {
         reject(err);
       } else {
-        resolve(data);
+        resolve(body);
       }
     });
   });
@@ -74,7 +74,7 @@ function getWeather() {
   });
 }
 
-function addWeather(currentReading) {
+function addWeather(currentNestData) {
   return getWeather()
   .then((rawWeatherResponse) => {
     const outsideTemperature = parseInt(get(rawWeatherResponse, ['query', 'results', 'channel', 'item', 'condition', 'temp']), 10);
@@ -83,7 +83,7 @@ function addWeather(currentReading) {
     return { outsideTemperature, weatherConditions };
   })
   .then((minimalWeather) => {
-    const m = assign(currentReading, minimalWeather);
+    const m = assign(currentNestData, minimalWeather);
     return m;
   });
 }
@@ -92,6 +92,7 @@ function handler(fetcher, processMessage) {
   return (event, context, callback) => {
     fetcher(nestUrl, process.env.ACCESS_TOKEN)
     .then(processMessage)
+    .then(saveNestData)
     .then(addWeather)
     .then(saveNestData)
     .then((data) => {
