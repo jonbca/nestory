@@ -119,7 +119,7 @@ resource aws_elasticsearch_domain "nestory_es_domain" {
             "Principal": "*",
             "Effect": "Allow",
             "Condition": {
-                "IpAddress": {"aws:SourceIp": ["2.25.112.233/32"]}
+                "IpAddress": {"aws:SourceIp": ["${var.source_ip}/32"]}
             }
         }
     ]
