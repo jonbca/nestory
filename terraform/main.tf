@@ -110,6 +110,26 @@ resource aws_lambda_permission "event_trigger_nest_fetch" {
 resource aws_elasticsearch_domain "nestory_es_domain" {
     domain_name = "nestory"
     elasticsearch_version = "2.3"
+    access_policies = <<CONFIG
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": "es:*",
+            "Principal": "*",
+            "Effect": "Allow",
+            "Condition": {
+                "IpAddress": {"aws:SourceIp": ["${var.source_ip}/32"]}
+            }
+        },
+        {
+            "Action": "es:ESHttpGet",
+            "Principal": "*",
+            "Effect": "Allow"
+        }
+    ]
+}
+CONFIG
     snapshot_options {
         automated_snapshot_start_hour = 23
     }
