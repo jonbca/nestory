@@ -6,3 +6,4 @@ package.zip
 install/
 terraform/terraform.tfstate.backup
 terraform/terraform.tfvars
+terraform/.terraform/
