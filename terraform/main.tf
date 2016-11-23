@@ -107,34 +107,68 @@ resource aws_lambda_permission "event_trigger_nest_fetch" {
     source_arn = "${aws_cloudwatch_event_rule.trigger_nest_fetch.arn}"
 }
 
-# resource aws_elasticsearch_domain "nestory_es_domain" {
-#     domain_name = "nestory"
-#     elasticsearch_version = "2.3"
-#     access_policies = <<CONFIG
-# {
-#     "Version": "2012-10-17",
-#     "Statement": [
-#         {
-#             "Action": "es:*",
-#             "Principal": "*",
-#             "Effect": "Allow",
-#             "Condition": {
-#                 "IpAddress": {"aws:SourceIp": ["${var.source_ip}/32"]}
-#             }
-#         }
-#     ]
-# }
-# CONFIG
-#     snapshot_options {
-#         automated_snapshot_start_hour = 23
-#     }
-#     ebs_options {
-#         ebs_enabled = true
-#         volume_type = 'standard'
-#         volume_size = 10
-#     }
-#     cluster_config {
-#         instance_type = 't2.micro.elasticsearch'
-#         instance_count = 1
-#     }
-# }
+resource aws_elasticsearch_domain "nestory_es_domain" {
+    domain_name = "nestory"
+    elasticsearch_version = "2.3"
+    snapshot_options {
+        automated_snapshot_start_hour = 23
+    }
+    ebs_options {
+        ebs_enabled = true
+        volume_type = "standard"
+        volume_size = 10
+    }
+    cluster_config {
+        instance_type = "t2.micro.elasticsearch"
+        instance_count = 1
+    }
+}
+
+data aws_iam_policy_document "dynamodb_to_es_policy_doc" {
+    statement {
+        actions = ["es:ESHttpPost"]
+        resources = ["${aws_elasticsearch_domain.nestory_es_domain.arn}/*"]
+    }
+}
+
+data aws_iam_policy_document "dynamodb_read_stream_policy_doc" {
+    statement {
+        actions = [
+            "dynamodb:DescribeStream",
+            "dynamodb:GetRecords",
+            "dynamodb:GetShardIterator",
+            "dynamodb:ListStreams"
+        ]
+        resources = ["${aws_dynamodb_table.nest_reading_history.stream_arn}"]
+    }
+}
+
+resource aws_iam_role "dynamodb_to_es_role" {
+    name = "lambda_es_role"
+    assume_role_policy = <<CONFIG
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+CONFIG
+}
+
+resource aws_iam_role_policy "dynamodb_es_lambda_role_policy" {
+    name = "ESWritePolicy"
+    role = "${aws_iam_role.dynamodb_to_es_role.id}"
+    policy = "${data.aws_iam_policy_document.dynamodb_to_es_policy_doc.json}"
+}
+
+resource aws_iam_role_policy "dynamodb_stream_read_role_policy" {
+    name = "DynamoDbStreamReadPolicy"
+    role = "${aws_iam_role.dynamodb_to_es_role.id}"
+    policy = "${data.aws_iam_policy_document.dynamodb_read_stream_policy_doc.json}"
+}
