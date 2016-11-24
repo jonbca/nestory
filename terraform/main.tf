@@ -111,23 +111,25 @@ resource aws_elasticsearch_domain "nestory_es_domain" {
     domain_name = "nestory"
     elasticsearch_version = "2.3"
     access_policies = <<CONFIG
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Action": "es:*",
-            "Principal": "*",
-            "Effect": "Allow",
-            "Condition": {
-                "IpAddress": {"aws:SourceIp": ["${var.source_ip}/32"]}
+{"Statement": [
+    {
+        "Action":"es:*",
+        "Condition": {
+            "IpAddress": {
+                "aws:SourceIp": "2.25.112.233/32"
             }
         },
-        {
-            "Action": "es:ESHttpGet",
-            "Principal": "*",
-            "Effect": "Allow"
-        }
-    ]
+        "Effect": "Allow",
+        "Principal": "*",
+        "Resource": "arn:aws:es:us-east-1:386454917180:domain/nestory/*"
+    },
+    {
+        "Action": "es:ESHttpGet",
+        "Effect":"Allow",
+        "Principal": "*",
+        "Resource":"arn:aws:es:us-east-1:386454917180:domain/nestory/*"
+    }],
+    "Version":"2012-10-17"
 }
 CONFIG
     snapshot_options {
