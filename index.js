@@ -18,6 +18,8 @@ const docClient = new AWS.DynamoDB.DocumentClient();
 const tableName = 'NestoryReadings';
 
 function getNestData(url, authToken) {
+  console.log('Fetching weather data');  
+  console.time('fetch-nest-data');
   return new Promise((resolve, reject) => {
     request.get({
       url,
@@ -26,7 +28,9 @@ function getNestData(url, authToken) {
       },
       json: true,
     }, (error, response, body) => {
+      console.timeEnd('fetch-nest-data');
       if (error) {
+        console.error('Error occurred fetching nest data', error);
         reject(error);
       } else {
         resolve(body);
@@ -47,9 +51,10 @@ function saveNestData(body) {
     TableName: tableName,
     Item: body,
   };
-
+  console.time('save-nest-data');
   return new Promise((resolve, reject) => {
     docClient.put(params, (err) => {
+      console.timeEnd('save-nest-data');
       if (err) {
         reject(err);
       } else {
@@ -60,12 +65,16 @@ function saveNestData(body) {
 }
 
 function getWeather() {
+  console.log('Fetching weather data');
+  console.time('fetch-weather');
   return new Promise((resolve, reject) => {
     request.get({
       url: weatherUrl,
       json: true,
     }, (error, response, body) => {
+      console.timeEnd('fetch-weather');
       if (error) {
+        console.error('Error occurred fetching weather', error);
         reject(error);
       } else {
         resolve(body);
