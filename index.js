@@ -18,7 +18,7 @@ const docClient = new AWS.DynamoDB.DocumentClient();
 const tableName = 'NestoryReadings';
 
 function getNestData(url, authToken) {
-  console.log('Fetching weather data');  
+  console.log('Fetching nest data');
   console.time('fetch-nest-data');
   return new Promise((resolve, reject) => {
     request.get({
@@ -99,6 +99,8 @@ function addWeather(currentNestData) {
 
 function handler(fetcher, processMessage) {
   return (event, context, callback) => {
+    console.log('Beginning Nest data fetch');
+    console.time('startNest');
     fetcher(nestUrl, process.env.ACCESS_TOKEN)
     .then(processMessage)
     .then(saveNestData)
@@ -106,10 +108,13 @@ function handler(fetcher, processMessage) {
     .then(saveNestData)
     .then((data) => {
       console.log(`Completed Nest API call. Ambient temperature: ${data.ambientTemperature}`);
+      console.timeEnd('startNest');
       callback(null, JSON.stringify(data));
     })
     .catch((err) => {
       console.log(`Nest request failed with error ${JSON.stringify(err)}`);
+      console.timeEnd('startNest');
+
       callback(JSON.stringify(err));
     });
   };
