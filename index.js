@@ -5,13 +5,16 @@ const assign = require('lodash.assign');
 const AWS = require('aws-sdk');
 
 const nestApiKey = process.env.NEST_API_KEY;
-const darkskyApiKey = process.env.DARKSKY_API_KEY;
-
-let latLong = process.env.LAT_LONG || '';
-latLong = latLong.replace(/\|/, ',');
 
 const nestUrl = 'https://developer-api.nest.com';
-const weatherUrl = `https://api.darksky.net/forecast/${darkskyApiKey}/${latLong}?units=si&exclude=minutely,hourly,daily,alerts,flags`;
+
+function weatherUrl() {
+  const darkskyApiKey = process.env.DARKSKY_API_KEY;
+  let latLong = process.env.LAT_LONG || '';
+  latLong = latLong.replace(/\|/, ',');
+
+  return `https://api.darksky.net/forecast/${darkskyApiKey}/${latLong}?units=si&exclude=minutely,hourly,daily,alerts,flags`;
+}
 
 AWS.config.update({
   region: 'us-east-1',
@@ -72,7 +75,7 @@ function getWeather() {
   console.time('fetch-weather');
   return new Promise((resolve, reject) => {
     request.get({
-      url: weatherUrl,
+      url: weatherUrl(),
       json: true,
       headers: {
         Connection: 'close',
