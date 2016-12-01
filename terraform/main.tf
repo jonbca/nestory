@@ -20,6 +20,10 @@ variable "darksky_api_key" {
     type = "string"
 }
 
+variable "nest_api_key" {
+    type = "string"
+}
+
 variable "lat_long" {
     type = "string"
 }
