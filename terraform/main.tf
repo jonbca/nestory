@@ -84,7 +84,8 @@ resource aws_lambda_function "fetch_nest_data" {
     environment {
         variables {
             DARKSKY_API_KEY = "${var.darksky_api_key}",
-            LAT_LONG = "${var.lat_long}"
+            LAT_LONG = "${var.lat_long}",
+            NEST_API_KEY = "${var.nest_api_key}"
         }
     }
 }

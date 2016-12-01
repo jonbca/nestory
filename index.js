@@ -4,10 +4,11 @@ const mapValues = require('lodash.mapvalues');
 const assign = require('lodash.assign');
 const AWS = require('aws-sdk');
 
-require('dotenv').config();
-
+const nestApiKey = process.env.NEST_API_KEY;
 const darkskyApiKey = process.env.DARKSKY_API_KEY;
-const latLong = process.env.LAT_LONG.replace(/\|/, ',');
+
+let latLong = process.env.LAT_LONG || '';
+latLong = latLong.replace(/\|/, ',');
 
 const nestUrl = 'https://developer-api.nest.com';
 const weatherUrl = `https://api.darksky.net/forecast/${darkskyApiKey}/${latLong}?units=si&exclude=minutely,hourly,daily,alerts,flags`;
@@ -121,7 +122,7 @@ function handler(fetcher, processMessage) {
   return (event, context, callback) => {
     console.log('Beginning Nest data fetch');
     console.time('start-nest');
-    fetcher(nestUrl, process.env.ACCESS_TOKEN)
+    fetcher(nestUrl, nestApiKey)
     .then(processMessage)
     .then(saveNestData)
     .then(addWeather)
