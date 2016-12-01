@@ -9,6 +9,8 @@ const nestApiKey = process.env.NEST_API_KEY;
 const nestUrl = 'https://developer-api.nest.com';
 
 function weatherUrl() {
+  'use strict';
+  
   const darkskyApiKey = process.env.DARKSKY_API_KEY;
   let latLong = process.env.LAT_LONG || '';
   latLong = latLong.replace(/\|/, ',');
