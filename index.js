@@ -1,15 +1,16 @@
 const request = require('request');
 const nestData = require('./nest_processor');
 const mapValues = require('lodash.mapvalues');
-const get = require('lodash.get');
 const assign = require('lodash.assign');
 const AWS = require('aws-sdk');
 
 require('dotenv').config();
 
-const nestUrl = 'https://developer-api.nest.com';
+const darkskyApiKey = process.env.DARKSKY_API_KEY;
+const latLong = process.env.LAT_LONG.replace(/\|/, ',');
 
-const weatherUrl = `https://api.darksky.net/forecast/${process.env.DARKSKY_API_KEY}/${process.env.LAT_LONG}?units=si&exclude=minutely,hourly,daily,alerts,flags`;
+const nestUrl = 'https://developer-api.nest.com';
+const weatherUrl = `https://api.darksky.net/forecast/${darkskyApiKey}/${latLong}?units=si&exclude=minutely,hourly,daily,alerts,flags`;
 
 AWS.config.update({
   region: 'us-east-1',
