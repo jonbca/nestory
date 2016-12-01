@@ -8,7 +8,8 @@ const AWS = require('aws-sdk');
 require('dotenv').config();
 
 const nestUrl = 'https://developer-api.nest.com';
-const weatherUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20item.condition%20from%20weather.forecast%20where%20woeid%20%3D%2021125%20AND%20u%20%3D%20'c'&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
+
+const weatherUrl = `https://api.darksky.net/forecast/${process.env.DARKSKY_API_KEY}/${process.env.LAT_LONG}?units=si&exclude=minutely,hourly,daily,alerts,flags`;
 
 AWS.config.update({
   region: 'us-east-1',
@@ -71,6 +72,11 @@ function getWeather() {
     request.get({
       url: weatherUrl,
       json: true,
+      headers: {
+        Connection: 'close',
+        'Accept-Encoding': 'identity',
+      },
+      timeout: 1500,
     }, (error, response, body) => {
       console.timeEnd('fetch-weather');
       if (error) {
@@ -86,10 +92,23 @@ function getWeather() {
 function addWeather(currentNestData) {
   return getWeather()
   .then((rawWeatherResponse) => {
-    const outsideTemperature = parseInt(get(rawWeatherResponse, ['query', 'results', 'channel', 'item', 'condition', 'temp']), 10);
-    const weatherConditions = get(rawWeatherResponse, ['query', 'results', 'channel', 'item', 'condition', 'text']);
+    const currently = rawWeatherResponse.currently;
 
-    return { outsideTemperature, weatherConditions };
+    const outsideTemperature = parseFloat(currently.temperature);
+    const weatherConditions = currently.summary;
+    const outsideHumidity = parseFloat(currently.humidity);
+    const apparentTemperature = parseFloat(currently.apparentTemperature);
+    const windSpeed = parseFloat(currently.windSpeed);
+    const cloudCover = parseFloat(currently.cloudCover);
+    const dewPoint = parseFloat(currently.dewPoint);
+
+    return { outsideTemperature,
+      weatherConditions,
+      outsideHumidity,
+      apparentTemperature,
+      windSpeed,
+      cloudCover,
+      dewPoint };
   })
   .then((minimalWeather) => {
     const m = assign(currentNestData, minimalWeather);
@@ -100,7 +119,7 @@ function addWeather(currentNestData) {
 function handler(fetcher, processMessage) {
   return (event, context, callback) => {
     console.log('Beginning Nest data fetch');
-    console.time('startNest');
+    console.time('start-nest');
     fetcher(nestUrl, process.env.ACCESS_TOKEN)
     .then(processMessage)
     .then(saveNestData)
@@ -108,12 +127,12 @@ function handler(fetcher, processMessage) {
     .then(saveNestData)
     .then((data) => {
       console.log(`Completed Nest API call. Ambient temperature: ${data.ambientTemperature}`);
-      console.timeEnd('startNest');
+      console.timeEnd('start-nest');
       callback(null, JSON.stringify(data));
     })
     .catch((err) => {
       console.log(`Nest request failed with error ${JSON.stringify(err)}`);
-      console.timeEnd('startNest');
+      console.timeEnd('start-nest');
 
       callback(JSON.stringify(err));
     });

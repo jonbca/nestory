@@ -16,6 +16,14 @@ variable "source_ip" {
     type = "string"
 }
 
+variable "darksky_api_key" {
+    type = "string"
+}
+
+variable "lat_long" {
+    type = "string"
+}
+
 data "aws_caller_identity" "current" {
 
 }
@@ -73,6 +81,12 @@ resource aws_lambda_function "fetch_nest_data" {
     handler = "index.handler"
     filename = "${var.upload_file}"
     source_code_hash = "${base64sha256(file(var.upload_file))}"
+    environment {
+        variables {
+            DARKSKY_API_KEY = "${var.darksky_api_key}",
+            LAT_LONG = "${var.lat_long}"
+        }
+    }
 }
 
 resource aws_cloudwatch_event_rule "trigger_nest_fetch" {
